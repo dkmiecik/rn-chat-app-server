@@ -29,7 +29,7 @@ app.get('/isAlive', function (req, res) {
     res.sendStatus(204);
 });
 
-app.listen(process.env.PORT, function () {
+server.listen(process.env.PORT, function () {
     console.log('App listening on port: ' + process.env.PORT);
 });
 
