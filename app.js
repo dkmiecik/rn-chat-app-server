@@ -29,6 +29,14 @@ app.get('/isAlive', function (req, res) {
     res.sendStatus(204);
 });
 
+app.post('/sendMessage', function (req, res) {
+    io.on('connection', (socket) => {
+        socket.emit('message', { message: req.body.message });
+    });
+    console.log('Sending response: ', req.body.message);
+    res.sendStatus(200);
+});
+
 server.listen(process.env.PORT, function () {
     console.log('App listening on port: ' + process.env.PORT);
 });
