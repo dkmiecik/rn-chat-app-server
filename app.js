@@ -30,10 +30,7 @@ app.get('/isAlive', function (req, res) {
 });
 
 app.post('/sendMessage', function (req, res) {
-    console.log(req.body);
-    io.on('connection', (socket) => {
-        socket.emit('message', { message: req.body.message });
-    });
+    io.sockets.emit('message', { message: req.body.message });
     console.log('Sending response: ', req.body.message);
     res.sendStatus(200);
 });
