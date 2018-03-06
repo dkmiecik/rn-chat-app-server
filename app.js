@@ -25,6 +25,10 @@ app.all('/api/*', function (req, res, next) {
     next();
 });
 
+app.get('/isAlive', function (req, res) {
+    res.sendStatus(204);
+});
+
 app.listen(3000, function () {
     console.log('App listening on port 3000');
 });
