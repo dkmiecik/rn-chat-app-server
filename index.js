@@ -15,23 +15,26 @@ io.on('connection', (socket) => {
     const clientId = socket.client.id;
     clients.push({ clientId, socket });
 
-    if (clients.length > 1) {
-        clients.forEach((client, index) => {
-            console.log(index, client.clientId);
-            console.log(index, index > 0 ? clients[--index].clientId : clients[++index].clientId);
-            client.socket.emit('user', { userId: index > 0 ? clients[--index].clientId : clients[++index].clientId });
-        });
-    }
+    clients.forEach((client) => {
+        const usersId = clients.filter(c => c.clientId !== client.clientId).map(c => c.clientId);
+        client.socket.emit('users', { users: usersId });
+    });
 
     socket.on('message', (message) => {
         const userId = message.userId;
-        const client = clients.find(client => client.clientId !== userId);
-        client.socket.emit('message', message.message);
-        console.log('User send message: ', message.message);
+        if (userId) {
+            const client = clients.find(client => client.clientId === userId);
+            client.socket.emit('message', { userId: clientId, message: message.message });
+        }
     });
+
     socket.on('disconnect', () => {
         clients = clients.filter((client) => client.clientId !== clientId);
         console.log('User disconnected.');
+        const usersId = clients.map(c => c.clientId);
+        clients.forEach((client) => {
+            client.socket.emit('users', { users: usersId });
+        });
     });
 });
 
