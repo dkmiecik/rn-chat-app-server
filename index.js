@@ -2,39 +2,40 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
+const _ = require('lodash');
 
 app.use(bodyParser.json());
 app.use(cors());
-
-let clients = [];
 
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
+    console.log('User connected.');
     const clientId = socket.client.id;
-    clients.push({ clientId, socket });
-
-    clients.forEach((client) => {
-        const usersId = clients.filter(c => c.clientId !== client.clientId).map(c => c.clientId);
-        client.socket.emit('users', { users: usersId });
+    const getTargetClients = () => _.filter(io.sockets.sockets, (socket) => socket);
+    const getTargetClientsIds = (target) => target.map((socket) => socket.id);
+    const sendTargetClientsIdsUpdate = (target, clients) => target.forEach((client) => {
+        const usersIds = clients.filter((c) => c !== client.id);
+        client.emit('users', { users: usersIds });
     });
+
+    const targets = getTargetClients();
+    const clients = getTargetClientsIds(targets);
+    sendTargetClientsIdsUpdate(targets, clients);
 
     socket.on('message', (message) => {
         const userId = message.userId;
-        if (userId) {
-            const client = clients.find(client => client.clientId === userId);
-            client.socket.emit('message', { userId: clientId, message: message.message });
-        }
+        const target = getTargetClients();
+        const client = target.find(client => client.id === userId);
+        client.emit('message', { userId: clientId, message: message.message });
     });
 
     socket.on('disconnect', () => {
-        clients = clients.filter((client) => client.clientId !== clientId);
         console.log('User disconnected.');
-        const usersId = clients.map(c => c.clientId);
-        clients.forEach((client) => {
-            client.socket.emit('users', { users: usersId });
-        });
+        const target = getTargetClients();
+        const clients = getTargetClientsIds(target);
+        sendTargetClientsIdsUpdate(target, clients);
     });
 });
 
